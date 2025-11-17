@@ -19,11 +19,11 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
 
             // 1. Arreglo del Crash de Fecha: Solo parsear si NO es vacío
-            .ForMember(dest => dest.BirthDate, opt =>
-            {
-                opt.Condition(src => !string.IsNullOrEmpty(src.BirthDate));
-                opt.MapFrom(src => DateOnly.Parse(src.BirthDate));
-            })
+            .ForMember(dest => dest.BirthDate, opt => opt.MapFrom((src, dest) =>
+                string.IsNullOrEmpty(src.BirthDate)
+                    ? dest.BirthDate
+                    : DateOnly.Parse(src.BirthDate)
+            ))
 
             // 2. Arreglo para no borrar datos: Solo mapear si tienen texto
             .ForMember(dest => dest.FirstName, opt => opt.Condition(src => !string.IsNullOrEmpty(src.FirstName)))
