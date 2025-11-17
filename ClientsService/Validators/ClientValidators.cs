@@ -21,13 +21,13 @@ public class CreateClientValidator : AbstractValidator<CreateClientRequest>
             .NotEmpty().EmailAddress()
             .Must(email => email.EndsWith("@censudex.cl"))
             .WithMessage("Email must be a @censudex.cl domain.")
-            .MustAsync(async (email, token) => 
+            .MustAsync(async (email, token) =>
                 !await context.Clients.IgnoreQueryFilters().AnyAsync(c => c.Email == email, token))
             .WithMessage("This email address is already registered.");
 
         RuleFor(x => x.Username)
             .NotEmpty()
-            .MustAsync(async (username, token) => 
+            .MustAsync(async (username, token) =>
                 !await context.Clients.IgnoreQueryFilters().AnyAsync(c => c.Username == username, token))
             .WithMessage("This username is already taken.");
 
@@ -65,10 +65,19 @@ public class UpdateClientValidator : AbstractValidator<UpdateClientRequest>
                 .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
         });
 
-        RuleFor(x => x.BirthDate).Must(BeOver18).WithMessage("Client must be at least 18 years old.");
-        RuleFor(x => x.PhoneNumber).Matches(@"^\+56\d{9}$").WithMessage("Phone number must be in Chilean format (+56XXXXXXXXX).");
-    }
+        When(x => !string.IsNullOrEmpty(x.BirthDate), () =>
+        {
+            RuleFor(x => x.BirthDate)
+                .Must(BeOver18).WithMessage("Client must be at least 18 years old.");
+        });
 
+        // Solo validar Teléfono si NO es vacío
+        When(x => !string.IsNullOrEmpty(x.PhoneNumber), () =>
+        {
+            RuleFor(x => x.PhoneNumber)
+                .Matches(@"^\+56\d{9}$").WithMessage("Phone number must be in Chilean format (+56XXXXXXXXX).");
+        });
+    }
     private bool BeOver18(string birthDateStr)
     {
         if (DateOnly.TryParse(birthDateStr, out var date))
